@@ -13,7 +13,12 @@ use App\NarrationsModel;
 use App\TestAccessModel;
 use \GuzzleHttp\Client;
 
-
+/**
+ * Class LoginController
+ * @package App\Http\Controllers
+ *
+ * This is the only one used class represent LoginController!
+ */
 class LoginController extends Controller
 {
     
