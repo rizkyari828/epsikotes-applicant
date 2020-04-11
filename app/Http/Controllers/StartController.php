@@ -1605,12 +1605,16 @@ class StartController extends Controller
     private function findScheduleHistory($schedule_id)
     {
         $dateNow = date('Y-m-d');
-        return ScheduleHistoriesModel::query()
+        $query = ScheduleHistoriesModel::query()
             ->select('JOB_MAPPING_VERSION_ID', 'SCHEDULE_HISTORY_ID')
-            ->where('SCHEDULE_ID', $schedule_id)
-            ->where('TEST_STATUS', '=', 'COMPLETE')
-            ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
-            ->first();
+            ->where('SCHEDULE_ID', $schedule_id);
+        if (!env('APP_DEBUG')) {
+            $query = $query
+                ->where('TEST_STATUS', '=', 'COMPLETE')
+                ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
+                ->first();
+        }
+        return $query->first();
     }
 
     private function findJobProfiles($job_mapping_version_id)
