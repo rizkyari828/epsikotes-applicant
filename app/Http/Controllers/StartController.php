@@ -1497,128 +1497,71 @@ class StartController extends Controller
         return $this->JobResult($testCategoryId, $scheduleId);
     }
 
-    public function JobResult($testCategoryId, $scheduleId)
+    public function JobResult($testCategoryId, $schedule_id)
     {
-        $schedule_history = $this->findScheduleHistory($scheduleId);
-
+        $schedule_history = $this->findScheduleHistory($schedule_id);
         $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
-
         $job_profiles = $this->findJobProfiles($job_mapping_version_id);
 
-        $totalScore = 0;
+        $total_score = 0;
+        foreach ($job_profiles as $job_profile_seq => $job_profile) {
+            $job_profile_scores = $this->findJobProfileScores($job_profile['JOB_PROFILE_ID']);
+            $mandatory_count = 0;
+            $achieved_mandatory_count = 0;
+            $achieved_count = 0;
 
-        foreach ($job_profiles as $key => $value) {
-            $profileScore = JobProfileScoreModel::select('CATEGORY_ID', 'PASS_SCORE', 'MANDATORY')
-                ->where('JOB_PROFILE_ID', $value['JOB_PROFILE_ID'])
-                ->get()
-                ->toArray();
+            foreach ($job_profile_scores as $job_profile_score_seq => $job_profile_score) {
+                $test_categories = $this->findTestCategories($schedule_id, $job_profile_score['CATEGORY_ID']);
 
-            $mandatory = 0;
-            $achieveMandatory = 0;
-            $totalAchieve = 0;
-            $totalCategory = count($profileScore);
-
-            // echo "profileScore";
-            // print_r($profileScore);
-            // echo "<br>";
-
-            foreach ($profileScore as $key2 => $value2) {
-                $getCategoryResult = TestCategoriesModel::select('SUM_RAWSCORE', 'STANDARD_SCORE')
-                    ->where('SCHEDULE_ID', $scheduleId)
-                    ->where('CATEGORY_ID', $value2['CATEGORY_ID'])
-                    ->get()
-                    ->toArray();
-
-                // echo "getCategoryResult";
-                // print_r($getCategoryResult);
-                // echo "<br>";
-
-                //GET TOTAL SCORE BY STANDARD SCORE
-                if ($key < 1) {
-                    if (count($getCategoryResult) > 0) {
-                        $totalScore = $totalScore + $getCategoryResult[0]['STANDARD_SCORE'];
+                if ($job_profile_seq < 1) {
+                    if (count($test_categories) > 0) {
+                        $total_score = $total_score + $test_categories[0]['STANDARD_SCORE'];
                     }
                 }
 
-
-                if (count($getCategoryResult) > 0) {
-                    //Hitung achieve per kategori
-                    if ($getCategoryResult[0]['STANDARD_SCORE'] >= $value2['PASS_SCORE']) {
-                        $totalAchieve++;
+                if (count($test_categories) > 0) {
+                    if ($test_categories[0]['STANDARD_SCORE'] >= $job_profile_score['PASS_SCORE']) {
+                        $achieved_count++;
 
                     }
-                    if ($value2['MANDATORY'] == 1) {
-                        $mandatory++;
-                        //hitung achieve mandatory
-                        if ($getCategoryResult[0]['STANDARD_SCORE'] >= $value2['PASS_SCORE']) {
-                            $achieveMandatory++;
+                    if ($job_profile_score['MANDATORY'] == 1) {
+                        $mandatory_count++;
+                        if ($test_categories[0]['STANDARD_SCORE'] >= $job_profile_score['PASS_SCORE']) {
+                            $achieved_mandatory_count++;
                         }
                     }
                 }
+
             }
 
-            if ($totalScore >= $job_profiles[$key]['TOTAL_PASS_SCORE']) {
-                $IS_ACHIEVE_TOTAL_SCORE = 1;
+            if ($total_score >= $job_profiles[$job_profile_seq]['TOTAL_PASS_SCORE']) {
+                $is_total_score_achieved = true;
             } else {
-                $IS_ACHIEVE_TOTAL_SCORE = 0;
+                $is_total_score_achieved = false;
             }
 
-            // cek has mandatory
-            if ($mandatory > 0)
-                $hasMandatory = 1;
-            else
-                $hasMandatory = 0;
+            $recommendation = $this->determineRecommendationBySystem($mandatory_count, $achieved_mandatory_count, $is_total_score_achieved);
 
-            //recomendation by system
-            $recomendBySystem = '';
-            if ($hasMandatory == 1 && $achieveMandatory >= $mandatory && $IS_ACHIEVE_TOTAL_SCORE == 1) {
-                $recomendBySystem = 'ABOVE_REQUIREMENT';
-            } elseif ($hasMandatory == 0 && $IS_ACHIEVE_TOTAL_SCORE == 1) {
-                $recomendBySystem = 'ABOVE_REQUIREMENT';
-            } elseif ($hasMandatory == 1 && $achieveMandatory >= 1 && $IS_ACHIEVE_TOTAL_SCORE == 1) {
-                $recomendBySystem = 'MEET_REQUIREMENT';
-            } else {
-                $recomendBySystem = 'BELOW_REQUIREMENT';
-            }
-
-            // echo 'MANDATORY:'.$mandatory.'-has mandatory:'.$hasMandatory.'-achieveMandatory:'.$achieveMandatory.'-recomendBySystem:'.$recomendBySystem;
-            // echo "<br>";
-
-            $scheduleHistoryId = $schedule_history['SCHEDULE_HISTORY_ID'];
-            //INSERT DATA KE TABLE PSY_TEST_RESULT
-            $insertTestCategory = TestResultModel::insert([
-                'SCHEDULE_HISTORY_ID' => $scheduleHistoryId,
-                'SCHEDULE_ID' => $scheduleId,
-                'JOB_ID' => $job_profiles[$key]['JOB_ID'],
-                'ACHIEVE_TOTAL_SCORE' => $totalScore,
-                'IS_ACHIEVE_TOTAL_SCORE' => $IS_ACHIEVE_TOTAL_SCORE,
-                'HAS_MANDATORY' => $hasMandatory,
-                'TOTAL_MANDATORY' => $mandatory,
-                'TOTAL_ACHIEVE_MANDATORY' => $achieveMandatory,
-                'RECOMENDATION_BY_SYSTEM' => $recomendBySystem
+            $schedule_history_id = $schedule_history['SCHEDULE_HISTORY_ID'];
+            TestResultModel::query()->insert([
+                'SCHEDULE_HISTORY_ID' => $schedule_history_id,
+                'SCHEDULE_ID' => $schedule_id,
+                'JOB_ID' => $job_profiles[$job_profile_seq]['JOB_ID'],
+                'ACHIEVE_TOTAL_SCORE' => $total_score,
+                'IS_ACHIEVE_TOTAL_SCORE' => $is_total_score_achieved,
+                'HAS_MANDATORY' => $mandatory_count > 0,
+                'TOTAL_MANDATORY' => $mandatory_count,
+                'TOTAL_ACHIEVE_MANDATORY' => $achieved_mandatory_count,
+                'RECOMENDATION_BY_SYSTEM' => $recommendation
             ]);
-            // echo $mandatory.'<-mandatory '. $achieveMandatory.'<-achieveMandatory '.$totalAchieve.'<-totalAchieve '.$hasMandatory.'<-hasMandatory '.$IS_ACHIEVE_TOTAL_SCORE.'<-IS_ACHIEVE_TOTAL_SCORE '.$totalScore.'<-totalScore'.$jobProfileId[$key]['TOTAL_PASS_SCORE'].'<-PASS_SCORE';
-            // echo "<br>";
-            // print_r($profileScore);
-            // echo "<br><br>";
+
         }
-        $applicant = SchedulesModel::select('CANDIDATE_ID')
-            ->where('SCHEDULE_ID', $scheduleId)
-            ->first();
-        $id_applicant = $applicant->CANDIDATE_ID;
+        $candidate_id = $this->findCandidateIdFromScheduleId($schedule_id);
         $parameter = [
-            'id_applicant' => $id_applicant,
+            'id_applicant' => $candidate_id,
         ];
         $parameter = Crypt::encrypt($parameter);
         return redirect()->action('StartController@finalGreeting', ['id' => $parameter]);
-        // $dt_applicant = ApplicantModel::find($id_applicant);
-        // $finalGreeting = NarrationsModel::select('NARRATION_TEXT')
-        //     ->where('NARRATION_NAME','FINAL GREATING')
-        //     ->first();        
-        // session()->flush();
-        // return view('finalGreeting')
-        //     ->with('dt_applicant', $dt_applicant)
-        //     ->with('finalgret',$finalGreeting['NARRATION_TEXT']);
     }
 
     public function finalGreeting($id)
@@ -1650,14 +1593,6 @@ class StartController extends Controller
 
     }
 
-    public function newJobResult($schedule_id)
-    {
-        $schedule_history = $this->findScheduleHistory($schedule_id);
-        $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
-        $job_profiles = $this->findJobProfiles($job_mapping_version_id);
-        return $job_profiles;
-    }
-
     private function findScheduleHistory($schedule_id)
     {
         $dateNow = date('Y-m-d');
@@ -1676,5 +1611,46 @@ class StartController extends Controller
             ->where('VERSION_ID', $job_mapping_version_id)
             ->get()
             ->toArray();
+    }
+
+    private function findJobProfileScores($job_profile_id)
+    {
+        return JobProfileScoreModel::query()
+            ->select('CATEGORY_ID', 'PASS_SCORE', 'MANDATORY')
+            ->where('JOB_PROFILE_ID', $job_profile_id)
+            ->get()
+            ->toArray();
+    }
+
+    private function findTestCategories($schedule_id, $category_id)
+    {
+        return TestCategoriesModel::query()
+            ->select('SUM_RAWSCORE', 'STANDARD_SCORE')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->where('CATEGORY_ID', $category_id)
+            ->get()
+            ->toArray();
+    }
+
+    private function determineRecommendationBySystem($mandatory_count, $achieved_mandatory_count, $is_total_score_achieved)
+    {
+        $has_mandatory = $mandatory_count > 0;
+        if ($has_mandatory && $achieved_mandatory_count >= $mandatory_count && $is_total_score_achieved) {
+            return 'ABOVE_REQUIREMENT';
+        } elseif (!$has_mandatory && $is_total_score_achieved) {
+            return 'ABOVE_REQUIREMENT';
+        } elseif ($has_mandatory && $achieved_mandatory_count >= 1 && $is_total_score_achieved) {
+            return 'MEET_REQUIREMENT';
+        } else {
+            return 'BELOW_REQUIREMENT';
+        }
+    }
+
+    private function findCandidateIdFromScheduleId($schedule_id)
+    {
+        return SchedulesModel::query()
+            ->select('CANDIDATE_ID')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->first()->CANDIDATE_ID;
     }
 }
