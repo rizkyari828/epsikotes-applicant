@@ -106,3 +106,4 @@ Route::get('scoring/{id}', 'ScoringController@getCategory');
 
 Route::get('finalGreeting/{id}', 'StartController@finalGreeting');
 
+Route::get('job-result/{schedule_id}', 'StartController@newJobResult');

@@ -1508,14 +1508,9 @@ class StartController extends Controller
     }
 
     public function JobResult($testCategoryId,$scheduleId){
-        $dateNow = date('Y-m-d');
-        $JobMapingId = ScheduleHistoriesModel::select('JOB_MAPPING_VERSION_ID','SCHEDULE_HISTORY_ID')
-            ->where('SCHEDULE_ID',$scheduleId)
-            ->where('TEST_STATUS','=','COMPLETE')
-            ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
-            ->first();
+        $scheduleHistory = $this->findScheduleHistory($scheduleId);
         
-        $JobMapping2 = $JobMapingId['JOB_MAPPING_VERSION_ID'];
+        $JobMapping2 = $scheduleHistory['JOB_MAPPING_VERSION_ID'];
 
         $jobProfileId = JobProfilesModel::select('JOB_PROFILE_ID','JOB_ID','TOTAL_PASS_SCORE')
             // ->join("psy_job_mapping_versions", 'psy_job_mapping_versions.VERSION_ID', '=', 'psy_job_profiles.VERSION_ID')
@@ -1604,7 +1599,7 @@ class StartController extends Controller
                 // echo 'MANDATORY:'.$mandatory.'-has mandatory:'.$hasMandatory.'-achieveMandatory:'.$achieveMandatory.'-recomendBySystem:'.$recomendBySystem;
                 // echo "<br>";
 
-            $scheduleHistoryId = $JobMapingId['SCHEDULE_HISTORY_ID'];
+            $scheduleHistoryId = $scheduleHistory['SCHEDULE_HISTORY_ID'];
             //INSERT DATA KE TABLE PSY_TEST_RESULT
             $insertTestCategory = TestResultModel::insert([
                 'SCHEDULE_HISTORY_ID' => $scheduleHistoryId,
@@ -1667,5 +1662,20 @@ class StartController extends Controller
         }
         return $is_conn;
 
+    }
+
+    public function newJobResult($schedule_id)
+    {
+        return $this->findScheduleHistory($schedule_id);
+    }
+
+    private function findScheduleHistory($schedule_id)
+    {
+        $dateNow = date('Y-m-d');
+        return ScheduleHistoriesModel::select('JOB_MAPPING_VERSION_ID','SCHEDULE_HISTORY_ID')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->where('TEST_STATUS','=','COMPLETE')
+            ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
+            ->first();
     }
 }
