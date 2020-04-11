@@ -1499,20 +1499,15 @@ class StartController extends Controller
 
     public function JobResult($testCategoryId, $scheduleId)
     {
-        $scheduleHistory = $this->findScheduleHistory($scheduleId);
+        $schedule_history = $this->findScheduleHistory($scheduleId);
 
-        $JobMapping2 = $scheduleHistory['JOB_MAPPING_VERSION_ID'];
+        $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
 
-        $jobProfileId = JobProfilesModel::select('JOB_PROFILE_ID', 'JOB_ID', 'TOTAL_PASS_SCORE')
-            // ->join("psy_job_mapping_versions", 'psy_job_mapping_versions.VERSION_ID', '=', 'psy_job_profiles.VERSION_ID')
-            // ->where('psy_job_mapping_versions.JOB_MAPPING_ID', $JobMapping2)
-            ->where('VERSION_ID', $JobMapping2)
-            ->get()
-            ->toArray();
+        $job_profiles = $this->findJobProfiles($job_mapping_version_id);
 
         $totalScore = 0;
 
-        foreach ($jobProfileId as $key => $value) {
+        foreach ($job_profiles as $key => $value) {
             $profileScore = JobProfileScoreModel::select('CATEGORY_ID', 'PASS_SCORE', 'MANDATORY')
                 ->where('JOB_PROFILE_ID', $value['JOB_PROFILE_ID'])
                 ->get()
@@ -1562,7 +1557,7 @@ class StartController extends Controller
                 }
             }
 
-            if ($totalScore >= $jobProfileId[$key]['TOTAL_PASS_SCORE']) {
+            if ($totalScore >= $job_profiles[$key]['TOTAL_PASS_SCORE']) {
                 $IS_ACHIEVE_TOTAL_SCORE = 1;
             } else {
                 $IS_ACHIEVE_TOTAL_SCORE = 0;
@@ -1589,12 +1584,12 @@ class StartController extends Controller
             // echo 'MANDATORY:'.$mandatory.'-has mandatory:'.$hasMandatory.'-achieveMandatory:'.$achieveMandatory.'-recomendBySystem:'.$recomendBySystem;
             // echo "<br>";
 
-            $scheduleHistoryId = $scheduleHistory['SCHEDULE_HISTORY_ID'];
+            $scheduleHistoryId = $schedule_history['SCHEDULE_HISTORY_ID'];
             //INSERT DATA KE TABLE PSY_TEST_RESULT
             $insertTestCategory = TestResultModel::insert([
                 'SCHEDULE_HISTORY_ID' => $scheduleHistoryId,
                 'SCHEDULE_ID' => $scheduleId,
-                'JOB_ID' => $jobProfileId[$key]['JOB_ID'],
+                'JOB_ID' => $job_profiles[$key]['JOB_ID'],
                 'ACHIEVE_TOTAL_SCORE' => $totalScore,
                 'IS_ACHIEVE_TOTAL_SCORE' => $IS_ACHIEVE_TOTAL_SCORE,
                 'HAS_MANDATORY' => $hasMandatory,
@@ -1657,16 +1652,29 @@ class StartController extends Controller
 
     public function newJobResult($schedule_id)
     {
-        return $this->findScheduleHistory($schedule_id);
+        $schedule_history = $this->findScheduleHistory($schedule_id);
+        $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
+        $job_profiles = $this->findJobProfiles($job_mapping_version_id);
+        return $job_profiles;
     }
 
     private function findScheduleHistory($schedule_id)
     {
         $dateNow = date('Y-m-d');
-        return ScheduleHistoriesModel::select('JOB_MAPPING_VERSION_ID', 'SCHEDULE_HISTORY_ID')
+        return ScheduleHistoriesModel::query()
+            ->select('JOB_MAPPING_VERSION_ID', 'SCHEDULE_HISTORY_ID')
             ->where('SCHEDULE_ID', $schedule_id)
             ->where('TEST_STATUS', '=', 'COMPLETE')
             ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
             ->first();
+    }
+
+    private function findJobProfiles($job_mapping_version_id)
+    {
+        return JobProfilesModel::query()
+            ->select('JOB_PROFILE_ID', 'JOB_ID', 'TOTAL_PASS_SCORE')
+            ->where('VERSION_ID', $job_mapping_version_id)
+            ->get()
+            ->toArray();
     }
 }
