@@ -1499,11 +1499,23 @@ class StartController extends Controller
 
     public function JobResult($testCategoryId, $schedule_id)
     {
+        $this->proceedTestResult($schedule_id);
+        $candidate_id = $this->findCandidateIdFromScheduleId($schedule_id);
+        $parameter = [
+            'id_applicant' => $candidate_id,
+        ];
+        $parameter = Crypt::encrypt($parameter);
+        return redirect()->action('StartController@finalGreeting', ['id' => $parameter]);
+    }
+
+    public function proceedTestResult($schedule_id)
+    {
         $schedule_history = $this->findScheduleHistory($schedule_id);
         $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
         $job_profiles = $this->findJobProfiles($job_mapping_version_id);
 
         $total_score = 0;
+        $test_results = [];
         foreach ($job_profiles as $job_profile_seq => $job_profile) {
             $job_profile_scores = $this->findJobProfileScores($job_profile['JOB_PROFILE_ID']);
             $mandatory_count = 0;
@@ -1543,7 +1555,7 @@ class StartController extends Controller
             $recommendation = $this->determineRecommendationBySystem($mandatory_count, $achieved_mandatory_count, $is_total_score_achieved);
 
             $schedule_history_id = $schedule_history['SCHEDULE_HISTORY_ID'];
-            TestResultModel::query()->insert([
+            $test_result = [
                 'SCHEDULE_HISTORY_ID' => $schedule_history_id,
                 'SCHEDULE_ID' => $schedule_id,
                 'JOB_ID' => $job_profiles[$job_profile_seq]['JOB_ID'],
@@ -1553,15 +1565,12 @@ class StartController extends Controller
                 'TOTAL_MANDATORY' => $mandatory_count,
                 'TOTAL_ACHIEVE_MANDATORY' => $achieved_mandatory_count,
                 'RECOMENDATION_BY_SYSTEM' => $recommendation
-            ]);
+            ];
+            TestResultModel::query()->insert($test_result);
+            array_push($test_results, $test_result);
 
         }
-        $candidate_id = $this->findCandidateIdFromScheduleId($schedule_id);
-        $parameter = [
-            'id_applicant' => $candidate_id,
-        ];
-        $parameter = Crypt::encrypt($parameter);
-        return redirect()->action('StartController@finalGreeting', ['id' => $parameter]);
+        return $test_results;
     }
 
     public function finalGreeting($id)
@@ -1653,4 +1662,5 @@ class StartController extends Controller
             ->where('SCHEDULE_ID', $schedule_id)
             ->first()->CANDIDATE_ID;
     }
+
 }
