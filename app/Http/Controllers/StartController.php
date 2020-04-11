@@ -1499,7 +1499,7 @@ class StartController extends Controller
 
     public function JobResult($testCategoryId, $schedule_id)
     {
-        $this->proceedTestResult($schedule_id);
+        $this->proceedTestResults($schedule_id);
         $candidate_id = $this->findCandidateIdFromScheduleId($schedule_id);
         $parameter = [
             'id_applicant' => $candidate_id,
@@ -1508,7 +1508,7 @@ class StartController extends Controller
         return redirect()->action('StartController@finalGreeting', ['id' => $parameter]);
     }
 
-    public function proceedTestResult($schedule_id)
+    public function proceedTestResults($schedule_id)
     {
         $schedule_history = $this->findScheduleHistory($schedule_id);
         $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
