@@ -17,6 +17,7 @@
                 ?>
                 {{ Form::open(array('method' => 'post', 'role' => 'form', 'id' => 'form-soal', 'action' => array(
                     'StartController@saveChoicesSession')) ) }}
+                    @csrf
                 <div class="row">
                     <div class="col-md-12">
                         <h3 class="time-left">

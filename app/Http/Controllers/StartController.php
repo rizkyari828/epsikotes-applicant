@@ -830,7 +830,9 @@ class StartController extends Controller
         } else if ($categoryId == 6) {
             foreach ($queList as $key => $value) {
                 $getQueMemoryList = TestMemoriesModel::select('QUESTION_TEXT')->where('TEST_QUESTION_ID', $queList[$key]['TEST_QUESTION_ID'])->first();
+
                 $getQueText = $getQueMemoryList->QUESTION_TEXT;
+                
                 array_push($queList[$key], $getQueText);
             }
             return $this->soalMemory($queList, $categoryId, $currentSoal, $jmlSoal, $scheduleId, $testCategoryId, $jmlExample, $ansList, $status);
@@ -1047,10 +1049,10 @@ class StartController extends Controller
             ->with('status', $status);
     }
 
-    public function saveChoicesSession()
+    public function saveChoicesSession(Request $request)
     {
         // $data = Crypt::decrypt($id);
-        $param = Input::post('parameter') !== null ? Crypt::decrypt(Input::post('parameter')) : Input::all(); // (Crypt::decrypt(Input::post('parameter')) !== null) ? Crypt::decrypt(Input::post('parameter')) : Input::all();
+        $param = \Request::input('parameter') !== null ? Crypt::decrypt(\Request::input('parameter')) :  $request->all(); // (Crypt::decrypt(Input::post('parameter')) !== null) ? Crypt::decrypt(Input::post('parameter')) : Input::all();
         //  echo $param['currentSoal'];
 
         $currentSoalSessions = null;
@@ -1066,7 +1068,7 @@ class StartController extends Controller
         $choice2Sessions = null;
 
 
-        if (Input::isMethod('get')) {
+        if ($request->isMethod('get')) {
             $currentSoal = session()->get('currentSoal');
             $jmlSoal = session()->get('jmlSoal');
             $scheduleId = session()->get('scheduleId');
@@ -1089,7 +1091,7 @@ class StartController extends Controller
                 $choice = session()->get('choice');
             }
         }
-        if (Input::isMethod('post')) {
+        if ($request->isMethod('post')) {
             $currentSoal = $param['currentSoal'];
             $jmlSoal = $param['jmlSoal'];
             $scheduleId = $param['scheduleId'];
@@ -1098,18 +1100,18 @@ class StartController extends Controller
             $testCategoryId = $param['testCategoryId'];
             $jmlExample = $param['jmlExample'];
             $dateTimeNow = Carbon::now();
-            $queList = json_decode(Input::post('data'), true);
-            $ansList = json_decode(Input::post('dataAns'), true);
+            $queList = json_decode(\Request::input('data'), true);
+            $ansList = json_decode(\Request::input('dataAns'), true);
             $prevSoal = $currentSoal - 1;
             if ($categoryId == 1 AND $queList[$prevSoal]['TYPE_SUB_CATEGORY'] != 'ANALOGY') {
                 if ($queList[$prevSoal]['TYPE_ANSWER'] == 'TEXT_SERIES' OR $queList[$prevSoal]['TYPE_ANSWER'] == 'MULTIPLE_GROUP') {
-                    $arr = [Input::post('choice'), Input::post('choice2')];
+                    $arr = [\Request::input('choice'), \Request::input('choice2')];
                     $choice = implode("/", $arr);
                 } else {
-                    $choice = Input::post('choice');
+                    $choice = \Request::input('choice');
                 }
             } else {
-                $choice = Input::post('choice');
+                $choice = \Request::input('choice');
             }
 
             session()->put('currentSoal', $param['currentSoal']);
@@ -1120,10 +1122,10 @@ class StartController extends Controller
             session()->put('testCategoryId', $param['testCategoryId']);;
             session()->put('jmlExample', $param['jmlExample']);;
 
-            session()->put('data', Input::post('data'));
-            session()->put('dataAns', Input::post('dataAns'));
-            session()->put('choice', Input::post('choice'));
-            session()->put('choice2', Input::post('choice2'));
+            session()->put('data', \Request::input('data'));
+            session()->put('dataAns', \Request::input('dataAns'));
+            session()->put('choice', \Request::input('choice'));
+            session()->put('choice2', \Request::input('choice2'));
         }
         // exit();
 
