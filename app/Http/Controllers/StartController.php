@@ -38,6 +38,8 @@ use App\TestScoreModel;
 
 class StartController extends Controller
 {
+    use \ArrayFlatten;
+
     public function startEpsikotest($id)
     {
         $scheduleHistoryId = Crypt::decrypt($id);
@@ -207,7 +209,7 @@ class StartController extends Controller
             ->first();
         $jobMappingVersionId = $JobMappingVersions->VERSION_ID;
 
-        // UPDATE SCHEDULE HISTORY 
+        // UPDATE SCHEDULE HISTORY
         $updateStatusSchedule = ScheduleHistoriesModel::where('SCHEDULE_ID', $scheduleId)
             ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
             ->update(['TEST_STATUS' => 'INCOMPLETE', 'JOB_MAPPING_VERSION_ID' => $jobMappingVersionId]);
@@ -677,7 +679,7 @@ class StartController extends Controller
             $rand = rand(0, 9);
             array_push($randNumber, $rand);
         }
-        $dtRandom = implode("", array_flatten($randNumber));
+        $dtRandom = implode("", $this->array_flatten($randNumber));
 
         $insertTestMemories = TestMemoriesModel::insert([
             'TEST_QUESTION_ID' => $testQuestionId,
@@ -832,7 +834,7 @@ class StartController extends Controller
                 $getQueMemoryList = TestMemoriesModel::select('QUESTION_TEXT')->where('TEST_QUESTION_ID', $queList[$key]['TEST_QUESTION_ID'])->first();
 
                 $getQueText = $getQueMemoryList->QUESTION_TEXT;
-                
+
                 array_push($queList[$key], $getQueText);
             }
             return $this->soalMemory($queList, $categoryId, $currentSoal, $jmlSoal, $scheduleId, $testCategoryId, $jmlExample, $ansList, $status);
@@ -1131,7 +1133,7 @@ class StartController extends Controller
 
         //var_dump($param);
 
-        //JIKA BUKAN EXAMPLE SOAL MAKA JAWABAN AKAN DISIMPAN 
+        //JIKA BUKAN EXAMPLE SOAL MAKA JAWABAN AKAN DISIMPAN
         if ($queList[$prevSoal]['EXAMPLE'] != 1) {
             $checkChoiceByQuestion = TestScoreModel::select('TEST_SCORE_ID')
                 ->where('TEST_QUESTION_ID', $testQueId)
