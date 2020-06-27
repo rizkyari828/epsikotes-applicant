@@ -50,6 +50,11 @@ class StartController extends Controller
         $dtScheduleHistory = ScheduleHistoriesModel::select('SCHEDULE_ID', 'JOB_MAPPING_ID', 'RESCHEDULE_SEQ')
             ->where('SCHEDULE_HISTORY_ID', $scheduleHistoryId)
             ->first();
+
+        if ($dtScheduleHistory == null) {
+            return [];
+        }
+
         $scheduleId = $dtScheduleHistory->SCHEDULE_ID;
         $jobMappingIdNow = $dtScheduleHistory->JOB_MAPPING_ID;
         $scheduleSequence = $dtScheduleHistory->RESCHEDULE_SEQ;
@@ -63,6 +68,11 @@ class StartController extends Controller
             ->where('JOB_MAPPING_ID', $jobMappingIdNow)
             ->whereRaw('? between DATE_FROM and DATE_TO', $dateNow)
             ->first();
+
+        if ($dtJobMappingVersion == null) {
+            return [];
+        }
+
         $jobMappingVersionId = $dtJobMappingVersion->VERSION_ID;
         $cekRandomCategory = $dtJobMappingVersion->RANDOM_CATEGORY;
 
