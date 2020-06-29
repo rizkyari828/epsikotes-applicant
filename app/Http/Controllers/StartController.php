@@ -843,9 +843,10 @@ class StartController extends Controller
             foreach ($queList as $key => $value) {
                 $getQueMemoryList = TestMemoriesModel::select('QUESTION_TEXT')->where('TEST_QUESTION_ID', $queList[$key]['TEST_QUESTION_ID'])->first();
 
-                $getQueText = $getQueMemoryList->QUESTION_TEXT;
-
-                array_push($queList[$key], $getQueText);
+                if ($getQueMemoryList != null) {
+                    $getQueText = $getQueMemoryList->QUESTION_TEXT;
+                    array_push($queList[$key], $getQueText);
+                }
             }
             return $this->soalMemory($queList, $categoryId, $currentSoal, $jmlSoal, $scheduleId, $testCategoryId, $jmlExample, $ansList, $status);
         }
