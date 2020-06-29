@@ -35,10 +35,10 @@ use App\TestChoicesModel;
 use App\TestMemoriesModel;
 use App\TestResultModel;
 use App\TestScoreModel;
+use \ArrayFlatten;
 
 class StartController extends Controller
 {
-    use \ArrayFlatten;
 
     public function startEpsikotest($id)
     {
