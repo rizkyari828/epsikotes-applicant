@@ -1,5 +1,5 @@
 <?php
-    
+
 ?>
 
 <!DOCTYPE html>
@@ -28,14 +28,14 @@
         <div id="preloader">
             <div data-loader="circle-side"></div>
         </div><!-- /Preload -->
-        
+
         <div id="loader_form">
             <div data-loader="circle-side-2"></div>
         </div><!-- /loader_form -->
         <div id="app">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-md-12" style="padding: 0 !important;">
                         <main class="py-4">
                             @yield('content')
                         </main>
