@@ -35,11 +35,9 @@ use App\TestChoicesModel;
 use App\TestMemoriesModel;
 use App\TestResultModel;
 use App\TestScoreModel;
-use \ArrayFlatten;
 
 class StartController extends Controller
 {
-
     public function startEpsikotest($id)
     {
         $scheduleHistoryId = Crypt::decrypt($id);
@@ -1682,4 +1680,13 @@ class StartController extends Controller
             ->first()->CANDIDATE_ID;
     }
 
+    function array_flatten($items)
+    {
+        return array_reduce($items,
+            fn($carry, $item) => is_array($item)
+                ? [...$carry, ...$this->array_flatten($item)]
+                : [...$carry, $item]
+            , []
+        );
+    }
 }
