@@ -24,7 +24,7 @@
                                <!--  <span class="badge badge-secondary">
                                     {{$queList[$currentSoal]['QUESTION_SEQ'] - $jmlExample}} / {{$jmlSoal - $jmlExample}}
                                 </span> -->
-                                <span class="badge badge-light" id="timer"></span> 
+                                <span class="badge badge-light" id="timer"></span>
                                 <input type="submit" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya" onclick="submitForm()">
                             @else
                                 <span class="badge badge-light">CONTOH SOAL </span>
@@ -33,9 +33,9 @@
                                 @else
                                     <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
                                 @endif
-                            @endif 
+                            @endif
                             <!-- {!! Form::submit('Selanjutnya', ['class' => 'btn btn-primary float-right', 'align' => 'right']) !!} -->
-                        </h3>  
+                        </h3>
                     </div>
                 </div>
                 <div id="middle-wizard" style="padding: 5px;">
@@ -58,7 +58,7 @@
                                 $listAns = $ansList[$queid];
                             ?>
                             @foreach($listAns as $listChoices => $val)
-                                <div class="col">
+                                <div class="col-sm-12 col-md">
                                     <div class="item">
                                         {{Form::radio('choice',  $val['ANS_CHOICE_ID'], false, ['id' => $listChoices, 'class' => 'required'])}}
                                         <label for="{{$listChoices}}">
@@ -72,7 +72,7 @@
                         </div><br>
                         <!-- /row-->
                     </div>
-                </div>  
+                </div>
 
                     {!! Form::hidden('parameter', $parameter) !!}
                     {!! Form::hidden('data', json_encode($queList)) !!}
@@ -90,7 +90,7 @@
                 </div>
                 <div class="modal-body">
                     <table class="table">
-                        <?php $imgs = $queList[$currentSoal]['HINT_IMG']; 
+                        <?php $imgs = $queList[$currentSoal]['HINT_IMG'];
                                 $txt = $queList[$currentSoal]['HINT_TEXT'];
                             if($txt != '' && $imgs == ''){ ?>
                                  <tr>
@@ -98,7 +98,7 @@
                                         <h4>{{$txt}}</h4>
                                     </td>
                                 </tr>
-                        <?php        
+                        <?php
                             }else if($txt == '' && $imgs != ''){ ?>
                                 <tr>
                                     <td style="text-align: center;">
@@ -112,7 +112,7 @@
                                         <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
-                        <?php } 
+                        <?php }
                         ?>
                     </table>
                 </div>
@@ -125,13 +125,13 @@
     </div>
     <script src="{{ asset('/js/jquery-3.3.1.min.js') }}"></script>
     <script type="text/javascript">
-        
+
         var example = {!!$queList[$currentSoal]['EXAMPLE']!!};
         var curSoal = {!!$currentSoal!!};
         window.onload=function(){
             if(example != 1){
                 var check = localStorage.getItem("startTime");
-                
+
                 if(!check || check < 1){
                     var waktu = {!!$queList[$currentSoal]['DURATION_PER_QUE']!!} + 1;
                     localStorage.setItem("startTime", waktu);
@@ -154,10 +154,10 @@
             }
         }
 
-        function submitForm(){ 
+        function submitForm(){
           // Call submit() method on <form id='myform'>
-          document.getElementById('form-soal').submit(); 
-        } 
+          document.getElementById('form-soal').submit();
+        }
         $(document).ready(function() {
             $('#submit').click(function (e) {
                 e.preventDefault();
@@ -167,8 +167,8 @@
         // function enterText(){
 
         //     var f = document.getElementById('answer_1');
-        //     if (!/^[A-Za-z]+$/.test(f.value)) 
-        //     { 
+        //     if (!/^[A-Za-z]+$/.test(f.value))
+        //     {
         //         alert("Input dengan text");
         //         f.value = f.value.substring(0,f.value.length-1);
         //     }
