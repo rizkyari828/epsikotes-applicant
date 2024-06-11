@@ -54,7 +54,7 @@
                             <div class="row">
                                 <div class="col-md-10 col-center">
                                     <?php $img = $queList[$currentSoal]['QUESTION_IMG']; ?>
-                                    <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$img}")}}" class="mr-3" alt="{{$img}}" width="80%">
+                                    <img src="{{ config('app.QUESTION_PATH').$img}}" class="mr-3" alt="{{$img}}" width="80%">
                                 </div>
                             </div><br>
                             <div class="alert alert-dismissible alert-secondary">
@@ -112,14 +112,14 @@
                             }else if($txt == '' && $imgs != ''){ ?>
                                 <tr>
                                     <td style="text-align: center;">
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php }else{  ?>
                                 <tr>
                                     <td style="text-align: center;">
                                         <h4>{!!$txt!!}</h4>
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php } 
@@ -161,7 +161,7 @@
                         document.getElementById("timer").className = "badge";
                         document.getElementById("timer").className += " badge-danger";
                     }
-                    document.getElementById("timer").innerHTML = waktu;
+                    document.getElementById("timer").innerHTML =  "SISA WAKTU "+waktu+" DETIK";
                     localStorage.setItem("startTime", waktu);
                 }
                 }, 1000);

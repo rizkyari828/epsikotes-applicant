@@ -40,7 +40,7 @@
                                 @if($queList[$currentSoal+1]['EXAMPLE'] != 1)
                                     <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Mulai Soal" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
                                 @else
-                                    <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
+                                    <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya 2" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
                                 @endif
                             @endif
                             <!-- {!! Form::submit('Selanjutnya', ['class' => 'btn btn-primary float-right', 'align' => 'right']) !!} -->
@@ -49,12 +49,13 @@
                 </div>
                 <div id="middle-wizard" style="padding: 5px;">
                     <!-- First branch What Type of Project ============================== -->
+                    <?php echo  "<b>Soal No " .  $nextSoal . "</b>" ;  ?>
                     <div class="step" data-state="branchtype">
                         <div class="question_title">
                             <div class="row">
                                 <div class="col-md-10 col-center">
                                     <?php $img = $queList[$currentSoal]['QUESTION_IMG']; ?>
-                                    <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$img}")}}" class="mr-3" alt="{{$img}}" width="60%">
+                                    <img src="{{ config('app.QUESTION_PATH').$img}}" class="mr-3" alt="{{$img}}" width="60%">
                                 </div>
                             </div><br>
                             <div class="alert alert-dismissible alert-secondary">
@@ -66,14 +67,20 @@
                                 $queid = $queList[$currentSoal]['QUESTION_ID'];
                                 $listAns = $ansList[$queid];
                             ?>
+                         
                             @foreach($listAns as $listChoices => $val)
                                 <div class="col-sm-12 col-md">
                                     <div class="item">
                                         {{Form::radio('choice', $val['ANS_CHOICE_ID'], false, ['id' => $listChoices, 'class' => 'required'])}}
                                         <label for="{{$listChoices}}">
                                             <strong>{{$alphas[$listChoices]}}</strong>
-                                            <?php $imgs = $val['CHOICE_IMG']; ?>
-                                            <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="40%">
+                                            <?php if( $val['CHOICE_IMG']== "") {
+                                                echo $val['CHOICE_TEXT'];
+                                             } 
+                                             else{?>
+                                            <?php $imgs = $val['CHOICE_IMG'];  ?>
+                                            <img src="{{ config('app.ANSWER_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="40%">
+                                             <?php }?>
                                         </label>
                                     </div>
                                 </div>
@@ -101,24 +108,24 @@
                     <table class="table">
                         <?php $imgs = $queList[$currentSoal]['HINT_IMG'];
                                 $txt = $queList[$currentSoal]['HINT_TEXT'];
-                            if($txt != '' && $imgs == ''){ ?>
+                            if($txt != '' && $imgs == ''){ echo "1"; ?>
                                  <tr>
                                     <td style="text-align: center;">
                                         <h4>{{$txt}}</h4>
                                     </td>
                                 </tr>
                         <?php
-                            }else if($txt == '' && $imgs != ''){ ?>
+                            }else if($txt == '' && $imgs != ''){ echo "2"; ?>
                                 <tr>
                                     <td style="text-align: center;">
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
-                        <?php }else{  ?>
+                        <?php }else{  echo "3";?>
                                 <tr>
                                     <td style="text-align: center;">
                                         <h4>{!!$txt!!}</h4>
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php }
@@ -160,7 +167,7 @@
                         document.getElementById("timer").className = "badge";
                         document.getElementById("timer").className += " badge-danger";
                     }
-                    document.getElementById("timer").innerHTML = waktu;
+                    document.getElementById("timer").innerHTML =  "SISA WAKTU "+waktu+" DETIK";
                     localStorage.setItem("startTime", waktu);
                 }
                 }, 1000);

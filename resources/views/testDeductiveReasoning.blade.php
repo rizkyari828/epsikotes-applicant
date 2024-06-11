@@ -56,6 +56,7 @@
                 </div>
                 <div id="middle-wizard">
                     <!-- First branch What Type of Project ============================== -->
+                    <?php echo  "<b>Soal No " .  $nextSoal . "</b>" ;  ?>
                     <div class="step" data-state="branchtype">
                         <div class="question_title">
                             <div class="row ">
@@ -116,14 +117,15 @@
                             }else if($txt == '' && $imgs != ''){ ?>
                                 <tr>
                                     <td style="text-align: center;">
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <!-- <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px"> -->
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php }else{  ?>
                                 <tr>
                                     <td style="text-align: center;">
                                         <h4>{!!$txt!!}</h4>
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php } 
@@ -163,7 +165,7 @@
                             document.getElementById("timer").className = "badge";
                             document.getElementById("timer").className += " badge-danger";
                         }
-                        document.getElementById("timer").innerHTML = waktu;
+                        document.getElementById("timer").innerHTML =  "SISA WAKTU "+waktu+" DETIK";
                         localStorage.setItem("startTime", waktu);
                     }
                 }, 1000);

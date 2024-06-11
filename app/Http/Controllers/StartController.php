@@ -35,6 +35,7 @@ use App\TestChoicesModel;
 use App\TestMemoriesModel;
 use App\TestResultModel;
 use App\TestScoreModel;
+use App\PsiCronn;
 
 class StartController extends Controller
 {
@@ -50,7 +51,7 @@ class StartController extends Controller
             ->first();
 
         if ($dtScheduleHistory == null) {
-            return [];
+            return ['msg'=>"Schedule Not Found"];
         }
 
         $scheduleId = $dtScheduleHistory->SCHEDULE_ID;
@@ -68,7 +69,7 @@ class StartController extends Controller
             ->first();
 
         if ($dtJobMappingVersion == null) {
-            return [];
+            return ['JOB MAPPING VERSION NOT FOUND'];
         }
 
         $jobMappingVersionId = $dtJobMappingVersion->VERSION_ID;
@@ -80,6 +81,7 @@ class StartController extends Controller
                 ->inRandomOrder()->pluck('CATEGORY_ID')->toArray();
         } else {
             $CategoryList = CategoryListModel::where('VERSION_ID', $jobMappingVersionId)
+                            ->orderBy('CATEGORY_ID', 'ASC')
                 ->pluck('CATEGORY_ID')->toArray();
         }
 
@@ -95,6 +97,7 @@ class StartController extends Controller
             $dtCategoryVersion = QueCategoryVersionsModel::select('VERSION_ID', 'RANDOM_SUB_CATEGORY', 'GET_ONE_SUB_CATEGORY')
                 ->where('CATEGORY_ID', $categoryLst)
                 ->whereRaw('? between DATE_FROM and DATE_TO', $dateNow)
+                ->orderBy("VERSION_NUMBER","DESC")
                 ->first();
 
             $checkRandomSubCategory = $dtCategoryVersion->RANDOM_SUB_CATEGORY;
@@ -237,7 +240,7 @@ class StartController extends Controller
             ->first();
         $VersionId = $dtCategoryVersion->VERSION_ID;
         $randomQuestion = $dtCategoryVersion->RANDOM_QUESTION;
-
+        
         if ($catId == 1) {
             if ($randomQuestion == 1 OR $randomQuestion == true) {
                 // ANALOGY
@@ -376,15 +379,18 @@ class StartController extends Controller
                         $this->insertTestChoices($testQueId, $questionList['QUESTION_ID'], $randomChoices);
                     }
                 }
+                
                 $dtQuestionExample3 = QuestionModel::select('QUESTION_ID', 'TYPE_SUB_CATEGORY', 'EXAMPLE', 'TYPE_ANSWER', 'RANDOM_ANSWER', 'QUESTION_CHARACTER')
                     ->where('VERSION_ID', $VersionId)
                     ->where('EXAMPLE', 1)
-                    ->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                   // ->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                    ->where('TYPE_SUB_CATEGORY', 'SERIES COMPLETION')
                     ->get();
                 $dtQuestion3 = QuestionModel::select('QUESTION_ID', 'TYPE_SUB_CATEGORY', 'EXAMPLE', 'TYPE_ANSWER', 'RANDOM_ANSWER', 'QUESTION_CHARACTER')
                     ->where('VERSION_ID', $VersionId)
                     ->where('EXAMPLE', 0)
-                    ->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                    //->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                    ->where('TYPE_SUB_CATEGORY', 'SERIES COMPLETION')
                     ->inRandomOrder()
                     ->get()
                     ->toArray();
@@ -507,7 +513,8 @@ class StartController extends Controller
                 }
                 $dtQuestion3 = QuestionModel::select('QUESTION_ID', 'TYPE_SUB_CATEGORY', 'EXAMPLE', 'TYPE_ANSWER', 'RANDOM_ANSWER', 'QUESTION_CHARACTER')
                     ->where('VERSION_ID', $VersionId)
-                    ->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                   // ->where('TYPE_SUB_CATEGORY', 'SERIES_COMPLETION')
+                   ->where('TYPE_SUB_CATEGORY', 'SERIES COMPLETION')
                     ->orderBy('EXAMPLE', 'DESC', 'QUESTION_ID', 'ASC')
                     ->get()
                     ->toArray();
@@ -681,17 +688,11 @@ class StartController extends Controller
 
     public function insertTestMemories($testQuestionId, $questionCharacter)
     {
-        $dateTimeNow = Carbon::now();
-        $randNumber = array();
-        for ($i = 0; $i < $questionCharacter; $i++) {
-            $rand = rand(0, 9);
-            array_push($randNumber, $rand);
-        }
-        $dtRandom = implode("", $this->array_flatten($randNumber));
+        $dateTimeNow = Carbon::now(); 
 
         $insertTestMemories = TestMemoriesModel::insert([
             'TEST_QUESTION_ID' => $testQuestionId,
-            'QUESTION_TEXT' => $dtRandom,
+            'QUESTION_TEXT' => $questionCharacter,
             'CREATED_DATE' => $dateTimeNow
         ]);
     }
@@ -783,8 +784,12 @@ class StartController extends Controller
         $queList = QuestionModel::join("psy_test_questions", 'psy_test_questions.QUESTION_ID', '=', 'que_questions.QUESTION_ID')
             ->where('psy_test_questions.TEST_CATEGORY_ID', $testCategoryId)
             ->where('psy_test_questions.STATUS', 0)
+            ->orderBy('psy_test_questions.QUESTION_ID')
             ->get()
             ->toArray();
+        // echo  $testCategoryId . "----";   
+        // print_r($queList);
+        // die();    
         $queListExample = QuestionModel::join("psy_test_questions", 'psy_test_questions.QUESTION_ID', '=', 'que_questions.QUESTION_ID')
             ->where('psy_test_questions.TEST_CATEGORY_ID', $testCategoryId)
             ->where('psy_test_questions.EXAMPLE', 1)
@@ -826,6 +831,7 @@ class StartController extends Controller
         $jmlSoal = count($queList);
         //status 1 = new
         $status = 1;
+        
         // echo '<script type="text/javascript">localStorage.removeItem("startTime");</script>';
         if ($categoryId == 1) {
             return $this->soalInductiveReasoning($queList, $categoryId, $currentSoal, $jmlSoal, $scheduleId, $testCategoryId, $jmlExample, $ansList, $status);
@@ -845,7 +851,7 @@ class StartController extends Controller
                     $getQueText = $getQueMemoryList->QUESTION_TEXT;
                     array_push($queList[$key], $getQueText);
                 }
-            }
+            } 
             return $this->soalMemory($queList, $categoryId, $currentSoal, $jmlSoal, $scheduleId, $testCategoryId, $jmlExample, $ansList, $status);
         }
     }
@@ -859,7 +865,7 @@ class StartController extends Controller
         $alphas = range('A', 'Z');
         $typeSoal = $queList[$currentSoal]['TYPE_SUB_CATEGORY'];
         $typeAnswer = $queList[$currentSoal]['TYPE_ANSWER'];
-        if ($typeSoal == 'SERIES_COMPLETION') {
+        if ($typeSoal == 'SERIES COMPLETION') {
             if ($typeAnswer == 'MULTIPLE_CHOICE') {
                 return view('testInductiveReasoningSeriesCompletion')
                     ->with('queList', $queList)
@@ -916,6 +922,9 @@ class StartController extends Controller
             }
         } else if ($typeSoal == 'CLASSIFICATION') {
             if ($typeAnswer == 'MULTIPLE_GROUP') {
+
+                // echo "CLASSIFICATION - MULTIPLE_GROUP";
+                // die();
                 return view('testInductiveReasoningClassification2')
                     ->with('queList', $queList)
                     ->with('currentSoal', $currentSoal)
@@ -929,6 +938,9 @@ class StartController extends Controller
                     ->with('jmlExample', $jmlExample)
                     ->with('status', $status);
             } else {
+
+                // echo "CLASSIFICATION";
+                // die();
                 return view('testInductiveReasoningClassification')
                     ->with('queList', $queList)
                     ->with('currentSoal', $currentSoal)
@@ -1062,7 +1074,19 @@ class StartController extends Controller
 
     public function saveChoicesSession(Request $request)
     {
-        // $data = Crypt::decrypt($id);
+        // $currentSoal = session()->get('currentSoal');
+        // $prevSoal    =  $currentSoal - 1 ;
+        // $queList = json_decode(session()->get('data'), true);
+        // echo session()->get('choice2') ;
+        // echo "---";
+        // echo session()->get('choice') ;
+        // echo "--";
+        // echo $prevSoal;
+        // echo "<pre>";
+        // print_r($queList[$prevSoal]);
+        // echo "<pre>";
+        // die();
+       // $data = Crypt::decrypt($id);
         $param = \Request::input('parameter') !== null ? Crypt::decrypt(\Request::input('parameter')) :  $request->all(); // (Crypt::decrypt(Input::post('parameter')) !== null) ? Crypt::decrypt(Input::post('parameter')) : Input::all();
         //  echo $param['currentSoal'];
 
@@ -1144,11 +1168,15 @@ class StartController extends Controller
 
         //JIKA BUKAN EXAMPLE SOAL MAKA JAWABAN AKAN DISIMPAN
         if ($queList[$prevSoal]['EXAMPLE'] != 1) {
+        //    echo "123";
+        //    die();
             $checkChoiceByQuestion = TestScoreModel::select('TEST_SCORE_ID')
                 ->where('TEST_QUESTION_ID', $testQueId)
                 ->first();
             if (!$checkChoiceByQuestion) {
                 // SIMPAN JAWABAN KE DB
+                // echo "insert";
+                // die();
                 try {
                     $insertChoices = TestScoreModel::insert([
                         'TEST_QUESTION_ID' => $testQueId,
@@ -1189,13 +1217,13 @@ class StartController extends Controller
                         $ansMemory2 = session()->get('ansMemory');
                         session()->put('ansMemory', $ansMemory2 + 1);
                     }
-                    $ansMemory3 = session()->get('ansMemory');
-                    if ($queList[$currentSoal]['QUESTION_CHARACTER'] > $queList[$prevSoal]['QUESTION_CHARACTER']) {
-                        if ($ansMemory3 < 2 or $ansMemory3 == null) {
-                            $currentSoal = $jmlSoal + 1;
-                        }
-                        session()->forget('ansMemory');
-                    }
+                    // $ansMemory3 = session()->get('ansMemory');
+                    // if ($queList[$currentSoal]['QUESTION_CHARACTER'] > $queList[$prevSoal]['QUESTION_CHARACTER']) {
+                    //     if ($ansMemory3 < 2 or $ansMemory3 == null) {
+                    //         $currentSoal = $jmlSoal + 1;
+                    //     }
+                    //     session()->forget('ansMemory');
+                    // }
                 }
             }
         } else {
@@ -1322,12 +1350,19 @@ class StartController extends Controller
             foreach ($value as $a => $val) {
                 $correct = 0;
                 if ($listChoice[$key][$a]['TYPE_SUB_CATEGORY'] == 'CLASSIFICATION') {
+                    // echo "ini";
                     $getss = TestScoreModel::select('ORIGINAL_ANSWER')
                         ->where('TEST_QUESTION_ID', $listChoice[$key][$a]['TEST_QUESTION_ID'])
+                       // ->where('TEST_QUESTION_ID', $listChoice[$key][11]['TEST_QUESTION_ID'])
                         ->first();
+                    //    echo"<pre>";
+                    //    print_r($listChoice);
+                    //    echo "</pre>";
+                      // die();
                     if ($getss != null) {
                         $gets = strtoupper($getss->ORIGINAL_ANSWER);
                         if ($gets != "/") {
+                           // echo "haloo";
                             $ans_applicant = explode("/", $gets);
 
                             if (count($ans_applicant) < 2) {
@@ -1336,8 +1371,27 @@ class StartController extends Controller
                                 $ans_applicant1 = str_split($ans_applicant[0]);
                                 $ans_applicant2 = str_split($ans_applicant[1]);
                                 $ans_correct = explode("/", $listChoice[$key][$a][0]);
+                                $ans_correct_corret = explode(" ", $listChoice[$key][$a][0]);
+                                $ans_correct_corret =$listChoice[$key][$a][0];
+                                $ans_correctcorrect1 ="ZZ";
+                                $ans_correctcorrect2 = "ZZ";
+                                if($listChoice[$key][$a][0] == "/")
+                                {
+                                    $ans_correctcorrect1 = "Z";
+                                    $ans_correctcorrect2 = "Z";
+                                }
+                                else
+                                {
+                                    $ans_correctcorrect1 = $ans_correct_corret[0];
+                                    $ans_correctcorrect2 = $ans_correct_corret[1];
+                                }
                                 $ans_correct1 = str_split($ans_correct[0]);
-                                $ans_correct2 = str_split($ans_correct[1]);
+                                if(isset($ans_correct[1])){
+
+                                    $ans_correct2 = str_split($ans_correct[1]);
+                                }else{
+                                    $ans_correct2 = array();
+                                }
                                 $correct = 1;
                                 foreach ($ans_applicant1 as $ans_a) {
                                     if (!in_array($ans_a, $ans_correct1)) {
@@ -1349,9 +1403,30 @@ class StartController extends Controller
                                         $correct = 0;
                                     }
                                 }
+                                // echo  $listChoice[$key][$a]['TEST_QUESTION_ID'] . " | " ;
+                                // echo "kunci jawaban : " . $ans_applicant[0] . "| jawaban : " . $ans_correctcorrect1 ;
+                                // echo "--------------------";
+                                // echo "kunci jawaban : " . $ans_applicant[1] . "| jawaban : " . $ans_correctcorrect2 ;
+                                // echo "???????????????????";
+                                // die();
+                                if($ans_applicant[0] == $ans_correctcorrect1)
+                                {
+                                    if($ans_applicant[1] ==  $ans_correctcorrect2)
+                                    {
+                                        echo "masuk if";
+                                        $updateRaw = TestScoreModel::where('TEST_QUESTION_ID', $listChoice[$key][$a]['TEST_QUESTION_ID'])
+                                        ->update(['RAW_SCORE' => 1]);   
+                                       //die(); 
+                                    }
+                                   // die();
+                                }
+                               
+                               
+
                             }
                         }
                     } else {
+                        
                         $correct = 0;
                     }
                 } else {
@@ -1363,6 +1438,7 @@ class StartController extends Controller
                         $correct = 1;
                     }
                 }
+               
                 if ($correct != 0) {
                     $updateRaw = TestScoreModel::where('TEST_QUESTION_ID', $listChoice[$key][$a]['TEST_QUESTION_ID'])
                         ->update(['RAW_SCORE' => 1]);
@@ -1394,8 +1470,8 @@ class StartController extends Controller
                     $total = TestScoreModel::select('RAW_SCORE')
                         ->where('TEST_QUESTION_ID', $queId)
                         ->where('RAW_SCORE', 1)
-                        ->first();
-                    if ($total) {
+                        ->first(); 
+                    if (!empty($total)) {
                         $totRaw++;
                     }
                 }
@@ -1486,8 +1562,7 @@ class StartController extends Controller
                     $totRaw = 0;
                 }
 
-            }
-
+            } 
             // GET STANDARD SCORE
             $standarScore2 = normaScoreModel::select('STANDARD_SCORE')
                 ->join('psy_norma_versions', 'psy_norma_versions.VERSION_ID', '=', 'psy_norma_score.VERSION_ID')
@@ -1495,8 +1570,13 @@ class StartController extends Controller
                 ->where('psy_norma.CATEGORY_ID', $val['CATEGORY_ID'])
                 ->where('RAW_SCORE', $totRaw)
                 ->first();
-            $standarScore = $standarScore2['STANDARD_SCORE'] . " ";
-
+            //$standarScore = $standarScore2['STANDARD_SCORE'] . " ";
+            if(isset($standarScore2['STANDARD_SCORE'])){
+                $standarScore = $standarScore2['STANDARD_SCORE'] . " ";
+            }else{
+                $standarScore = "" ;
+            }
+            
             if ($standarScore2) {
                 $updateTestCategories = TestCategoriesModel::where('TEST_CATEGORY_ID', $val['TEST_CATEGORY_ID'])
                     ->update(['SUM_RAWSCORE' => $totRaw, 'STANDARD_SCORE' => $standarScore]);
@@ -1524,6 +1604,7 @@ class StartController extends Controller
     public function proceedTestResults($schedule_id)
     {
         $schedule_history = $this->findScheduleHistory($schedule_id);
+        
         $job_mapping_version_id = $schedule_history['JOB_MAPPING_VERSION_ID'];
         $job_profiles = $this->findJobProfiles($job_mapping_version_id);
 
@@ -1534,7 +1615,12 @@ class StartController extends Controller
             $mandatory_count = 0;
             $achieved_mandatory_count = 0;
             $achieved_count = 0;
-
+            $nilai_1 = 0;
+            $nilai_2 = 0;
+            $nilai_3 = 0;
+            $nilai_4 = 0;
+            $nilai_5 = 0;
+            $nilai_6 = 0;
             foreach ($job_profile_scores as $job_profile_score_seq => $job_profile_score) {
                 $test_categories = $this->findTestCategories($schedule_id, $job_profile_score['CATEGORY_ID']);
 
@@ -1557,6 +1643,33 @@ class StartController extends Controller
                     }
                 }
 
+                if($job_profile_score['CATEGORY_ID'] == 1){
+                    if(!empty($test_categories[0])){
+                    $nilai_1 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                }elseif ($job_profile_score['CATEGORY_ID'] == 2) {
+                    if(!empty($test_categories[0])){
+
+                        $nilai_2 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                }elseif ($job_profile_score['CATEGORY_ID'] == 3) {
+                    if(!empty($test_categories[0])){
+                    $nilai_3 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                }elseif ($job_profile_score['CATEGORY_ID'] == 4) {
+                    if(!empty($test_categories[0])){
+                    $nilai_4 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                }elseif ($job_profile_score['CATEGORY_ID'] == 5) {
+                    if(!empty($test_categories[0])){
+                    $nilai_5 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                }elseif ($job_profile_score['CATEGORY_ID'] == 6) {
+                    if(!empty($test_categories[0])){
+                    $nilai_6 = $test_categories[0]['STANDARD_SCORE'];
+                    }
+                } 
+
             }
 
             if ($total_score >= $job_profiles[$job_profile_seq]['TOTAL_PASS_SCORE']) {
@@ -1578,11 +1691,94 @@ class StartController extends Controller
                 'TOTAL_MANDATORY' => $mandatory_count,
                 'TOTAL_ACHIEVE_MANDATORY' => $achieved_mandatory_count,
                 'RECOMENDATION_BY_SYSTEM' => $recommendation
-            ];
+            ]; 
             TestResultModel::query()->insert($test_result);
             array_push($test_results, $test_result);
 
+
+            //push API ke GAWE
+
+            $cabang_id = $this->findCabangIdFromScheduleId($schedule_id);
+        //$schedule = Schedules::find($schedule_id);
+           $schedule = $this->findGaweSchedulId($schedule_id);
+           $schedule2 = $this->findGaweSchedulId2($schedule_id);
+           $tgl    = $this->findGaweCreateBy($schedule_id);
+        //    echo "1 | ";
+        //    print_r($schedule2);
+        //    die();
+            $data = array(
+		        'schedule_id' => $schedule['SCHEDULE_GAWE_ID'],
+                'status' => 'COMPLETE',
+                'job_id' => $job_profiles[$job_profile_seq]['JOB_ID'],
+                'recommendation' => $recommendation,
+                'induktif' => $nilai_1,
+                'deduktif' => $nilai_2,
+                'pemahaman_bacaan' => $nilai_3,
+                'arimatika' => $nilai_4,
+                'spasial' => $nilai_5,
+                'memori' => $nilai_6,
+                'achieve_total_score' =>$total_score,
+                'sim_id' => $schedule2['CREATED_BY'],
+                'tanggal_test' => $tgl['ACTUAL_START_DATE'],
+                'id_cabang' => $cabang_id['CABANG_ID'],
+            );
+            // $data2 = json_encode($data);
+            // $curl = curl_init();
+            
+            // curl_setopt_array($curl, array(
+            //     CURLOPT_URL => "https://gawe.id/api/epsikotes/psycotest_result",
+            //     CURLOPT_RETURNTRANSFER => true,
+            //     CURLOPT_ENCODING => "",
+            //     CURLOPT_MAXREDIRS => 10,
+            //     CURLOPT_TIMEOUT => 30000,
+            //     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            //     CURLOPT_CUSTOMREQUEST => "POST",
+            //     CURLOPT_POSTFIELDS => json_encode($data),
+            //     CURLOPT_HTTPHEADER => array(
+            //         // Set here requred headers
+            //         "accept: */*",
+            //         "accept-language: en-US,en;q=0.8",
+            //         "content-type: application/json",
+            //     ),
+            // ));
+            // $response = curl_exec($curl);
+            //----------------------------------------------------------
+
+            
+
+       
         }
+            // $url = "https://gawe.id/api/epsikotes/psycotest_result";
+            // $curlHandle = curl_init();
+            // curl_setopt($curlHandle, CURLOPT_URL, $url);
+            // curl_setopt($curlHandle, CURLOPT_POSTFIELDS, "schedule_id=". $schedule['SCHEDULE_GAWE_ID'] . "&status=COMPLETE&job_id=". $job_profiles[$job_profile_seq]['JOB_ID'] . 
+            // "&recommendation=". $recommendation . "&induktif=".  $nilai_1 . "&deduktif=".  $nilai_2 . "&pemahaman_bacaan=".  $nilai_3 . "&arimatika=".  $nilai_4 . "&spasial=".  $nilai_5 . "&memori=".  trim($nilai_6) . "&achieve_total_score=". $total_score . "&sim_id=". $schedule2['CREATED_BY'] . "&tanggal_test=".  $tgl['ACTUAL_START_DATE'] . "&id_cabang=".   $cabang_id['CABANG_ID'] . "");
+            // //curl_setopt($curlHandle, CURLOPT_POSTFIELDS,$data);
+            // curl_setopt($curlHandle, CURLOPT_HEADER, 0);
+            // curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, 1);
+            // curl_setopt($curlHandle, CURLOPT_TIMEOUT,30);
+            // curl_setopt($curlHandle, CURLOPT_POST, 1);
+            // curl_exec($curlHandle);
+            
+            // cron job
+            $dt_cronn = new PsiCronn(array(
+                'schedule_id' => $schedule['SCHEDULE_GAWE_ID'],
+                'status' => 'COMPLETE',
+                'job_id' => $job_profiles[$job_profile_seq]['JOB_ID'],
+                'recommendation' => $recommendation,
+                'induktif' => $nilai_1,
+                'deduktif' => $nilai_2,
+                'pemahaman_bacaan' => $nilai_3,
+                'arimatika' => $nilai_4,
+                'spasial' => $nilai_5,
+                'memori' => trim($nilai_6),
+                'achieve_total_score' =>$total_score,
+                'sim_id' => $schedule2['CREATED_BY'],
+                'tanggal_test' => $tgl['ACTUAL_START_DATE'],
+                'id_cabang' => $cabang_id['CABANG_ID'],
+            ));
+            $dt_cronn->save();
+
         return $test_results;
     }
 
@@ -1616,7 +1812,7 @@ class StartController extends Controller
     }
 
     private function findScheduleHistory($schedule_id)
-    {
+    { 
         $dateNow = date('Y-m-d');
         $query = ScheduleHistoriesModel::query()
             ->select('JOB_MAPPING_VERSION_ID', 'SCHEDULE_HISTORY_ID')
@@ -1626,8 +1822,12 @@ class StartController extends Controller
                 ->where('TEST_STATUS', '=', 'COMPLETE')
                 ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
                 ->first();
+            return $query;
+        }else{
+            return $query;
         }
-        return $query->first();
+ 
+       
     }
 
     private function findJobProfiles($job_mapping_version_id)
@@ -1662,13 +1862,13 @@ class StartController extends Controller
     {
         $has_mandatory = $mandatory_count > 0;
         if ($has_mandatory && $achieved_mandatory_count >= $mandatory_count && $is_total_score_achieved) {
-            return 'ABOVE_REQUIREMENT';
+            return 'DISARANKAN';
         } elseif (!$has_mandatory && $is_total_score_achieved) {
-            return 'ABOVE_REQUIREMENT';
+            return 'DISARANKAN';
         } elseif ($has_mandatory && $achieved_mandatory_count >= 1 && $is_total_score_achieved) {
-            return 'MEET_REQUIREMENT';
+            return 'DIPERTIMBANGKAN';
         } else {
-            return 'BELOW_REQUIREMENT';
+            return 'TIDAK DISARANKAN';
         }
     }
 
@@ -1678,6 +1878,41 @@ class StartController extends Controller
             ->select('CANDIDATE_ID')
             ->where('SCHEDULE_ID', $schedule_id)
             ->first()->CANDIDATE_ID;
+    }
+    private function findCabangIdFromScheduleId($schedule_id)
+    {
+        return ApplicantModel::join("psy_schedules", 'mst_applicant.CANDIDATE_ID', '=', 'psy_schedules.CANDIDATE_ID')
+            ->select('CABANG_ID')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->first();
+    }
+
+    private function findGaweSchedulId($schedule_id)
+    {
+        return SchedulesModel::query()
+            ->select('SCHEDULE_GAWE_ID')
+           // ->select('CREATED_BY')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->first();
+    }
+
+    private function findGaweSchedulId2($schedule_id)
+    {
+        return SchedulesModel::query()
+            //->select('SCHEDULE_GAWE_ID')
+            ->select('CREATED_BY')
+            ->where('SCHEDULE_ID', $schedule_id)
+            ->first();
+    }
+
+    private function findGaweCreateBy($schedule_id)
+    {
+        //ScheduleHistoriesModel
+        return ScheduleHistoriesModel::query()
+        ->select('ACTUAL_START_DATE')
+        ->where('SCHEDULE_ID', $schedule_id)
+        ->first();
+
     }
 
     function array_flatten($items)

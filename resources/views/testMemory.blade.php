@@ -29,6 +29,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <h3 class="time-left">
+                        
                             @if($queList[$currentSoal]['EXAMPLE'] != 1)
                                 <!-- <span class="badge badge-secondary">
                                     {{$queList[$currentSoal]['QUESTION_SEQ'] - $jmlExample}} / {{$jmlSoal - $jmlExample}}
@@ -37,7 +38,7 @@
                                 <input type="submit" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya" onclick="submitForm()">
                             @else
                                 <span class="badge badge-light">CONTOH SOAL</span>
-                                @if($queList[$currentSoal+1]['EXAMPLE'] != 1)
+                                @if(isset($queList[$currentSoal+1]['EXAMPLE']) && $queList[$currentSoal+1]['EXAMPLE'] == 1)
                                     <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Mulai Soal" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
                                 @else
                                     <input type="button" name="next" class="btn btn-primary float-right" align="right" value="Selanjutnya" id="submitBtn" data-toggle="modal" data-target="#confirm-submit">
@@ -50,13 +51,22 @@
                 </div>
                 <div id="middle-wizard" style="padding: 5px;">
                     <!-- First branch What Type of Project ============================== -->
+                    @if($queList[$currentSoal]['EXAMPLE'] != 1)
+                        <?php echo  "<b>Soal No " .  $nextSoal . "</b>" ;  ?>
+                    @endif
                     <div class="step" data-state="branchtype">
                         <div class="question_title">
                             <div class="row">
                                 <div class="col-md-6 col-center" id="cont-anim">
                                     <?php 
+                                    if(isset($queList[$currentSoal][0])){
+
                                         $soal = str_split($queList[$currentSoal][0]); 
+                                    }else{
+                                        $soal = array();
+                                    }
                                         $jmlNumber = $queList[$currentSoal]['QUESTION_CHARACTER'];
+                                    
                                     ?>
                                     @foreach($soal as $que)
                                         <div class="anim-number">{{$que}}</div>
@@ -99,7 +109,11 @@
                 <div class="modal-body">
                     <table class="table">
                         <tr>
+                            <?php if(isset($queList[$currentSoal][0])){?>
                             <td><h4 align="center">{!!$queList[$currentSoal][0]!!}</h4></td>
+                            <?php }else{?>
+                            <td><h4 align="center">-</h4></td>
+                            <?php }?>
                         </tr>
                     </table>
                 </div>
@@ -118,9 +132,12 @@
       $("#soal").hide();
       $("#jawab").hide();
       var jml = {!!$jmlNumber!!};
+      var totalString = jml.toString().length; 
       var count = 0;
       var itv = setInterval(change,  1500);
-      function change() { 
+      function change() {  
+        console.log("interval : "+ count+" - Jumlah:"+totalString);
+
         $('#cont-anim > div:first')
           .fadeOut(200)
           .next()
@@ -128,7 +145,7 @@
           .end()
           .appendTo('#cont-anim');
         count++;
-        if(count == jml){
+        if(count == totalString){
             clearInterval(itv);
             $("#cont-anim").fadeOut("fast");
             $("#soal").fadeIn("slow");
@@ -161,7 +178,7 @@
                             document.getElementById("timer").className = "badge";
                             document.getElementById("timer").className += " badge-danger";
                         }
-                        document.getElementById("timer").innerHTML = waktu;
+                        document.getElementById("timer").innerHTML =  "SISA WAKTU "+waktu+" DETIK";
                         localStorage.setItem("startTime", waktu);
                     }
                 }, 1000);
@@ -186,6 +203,14 @@
             $('#submit').click(function (e) {
                 e.preventDefault();
                 document.getElementById("form-soal").submit();
+            });
+            
+            $('.txt-field-answer-number').bind('keypress', function (e) {
+                var keyCode = e.which ? e.which : e.keyCode;
+                if(!(keyCode >= 48 && keyCode <= 57))
+                {
+                    return false;
+                }
             });
         });
     </script>

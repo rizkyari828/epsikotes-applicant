@@ -38,7 +38,7 @@ class LoginController extends Controller
         $candidateIdList = ApplicantModel::select('CANDIDATE_ID')
             ->where('APPLICANT_ID',$applicantIdDecrypt)
             ->first();
-
+          
 
         $candidateId =  isset($candidateIdList) ?  $candidateIdList->CANDIDATE_ID : 0  ;
 
@@ -50,7 +50,8 @@ class LoginController extends Controller
             ->whereRaw('? between psy_schedule_histories.PLAN_START_DATE and psy_schedule_histories.PLAN_END_DATE',$dateNow)
 	     ->select('psy_schedules.SCHEDULE_ID')
             ->first();
-    	
+          
+           
     	if($isSchedule){
     		// cek jadwal psychotest 
     		$isScheduleHistories = ScheduleHistoriesModel::select('SCHEDULE_HISTORY_ID','JOB_MAPPING_ID')
@@ -58,11 +59,11 @@ class LoginController extends Controller
 	            ->whereIn('TEST_STATUS',['NOT_ATTEMPT','INCOMPLETE'])
 	            ->whereRaw('? between PLAN_START_DATE and PLAN_END_DATE', $dateNow)
 	    		->first();
-
+               
             $ip = $this->get_client_ip();
             $browser = $this->get_client_browser();
             $os = $_SERVER['HTTP_USER_AGENT'];
-
+            
 	    	if($isScheduleHistories){
                 $scheduleHistoryId = $isScheduleHistories->SCHEDULE_HISTORY_ID;
 
@@ -104,6 +105,7 @@ class LoginController extends Controller
             $jobMappingVersion = JobMappingVersionsModel::select('GENERAL_INSTRUCTION')
                 ->where('JOB_MAPPING_ID',($isScheduleHistories->JOB_MAPPING_ID))
                 ->first();
+             
             $narrationId = $jobMappingVersion->GENERAL_INSTRUCTION;
             $generalInstruction = NarrationsModel::find($narrationId);
     		return view('introduction')

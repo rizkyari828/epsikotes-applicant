@@ -55,6 +55,8 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     'asset_url' => env('ASSET_URL', null),
+    'ANSWER_PATH' => env('ANSWER_PATH', null),
+    'QUESTION_PATH' => env('QUESTION_PATH', null),
 
     /*
     |--------------------------------------------------------------------------

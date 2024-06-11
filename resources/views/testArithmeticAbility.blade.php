@@ -49,13 +49,15 @@
                 </div>
                 <div id="middle-wizard" style="padding: 5px;">
                     <!-- First branch What Type of Project ============================== -->
+                    <?php echo  "<b>Soal No " .  $nextSoal . "</b>" ;  ?>
                     <div class="step" data-state="branchtype">
                         <div class="question_title">
                             <div class="row">
                                 <div class="col-md-10 col-center">
-                                    @if($queList[$currentSoal]['QUESTION_TEXT'] == NULL)
+                                    @if($queList[$currentSoal]['QUESTION_TEXT'] == NULL || $queList[$currentSoal]['QUESTION_TEXT'] == '')
                                         <?php $img = $queList[$currentSoal]['QUESTION_IMG']; ?>
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$img}")}}" class="mr-3" alt="{{$img}}" width="130px">
+                                        <!-- <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$img}")}}" class="mr-3" alt="{{$img}}" width="130px"> -->
+                                        <img src="{{ config('app.QUESTION_PATH').$img}}" class="mr-3" alt="{{$img}}" width="130px">
                                     @else
                                         <h1>{{$queList[$currentSoal]['QUESTION_TEXT']}}</h1>
                                     @endif
@@ -73,18 +75,20 @@
                                         {{Form::radio('choice', $val['ANS_CHOICE_ID'], false, ['id' => $listChoices, 'class' => 'required'])}}
                                         <label for="{{$listChoices}}">
                                             <strong>{{$alphas[$listChoices]}}</strong>
-                                            @if($queList[$currentSoal]['QUESTION_TEXT'] == NULL)
+                                            @if($val['CHOICE_TEXT'] == NULL)
                                                 <?php $imgs = $val['CHOICE_IMG']; 
                                                     if($val['CHOICE_TEXT'] != '' && $imgs == ''){ ?>
                                                         <h1>{{$val['CHOICE_TEXT']}}</h1>
                                                         <br>
                                                 <?php        
                                                     }else if($val['CHOICE_TEXT'] == '' && $imgs != ''){ ?>
-                                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="50px">
+                                                        <!-- <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="50px"> -->
+                                                        <img src="{{ config('app.ANSWER_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="50px">
+
                                                 <?php }else{  ?>
                                                         <h1>{{$val['CHOICE_TEXT']}}</h1>
                                                         <br>
-                                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="50px">
+                                                        <img src="{{config('app.ANSWER_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="50px">
                                                 <?php } 
                                                 ?>
                                             @else
@@ -125,14 +129,16 @@
                             }else if($txt == '' && $imgs != ''){ ?>
                                 <tr>
                                     <td style="text-align: center;">
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <!-- <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px"> -->
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php }else{  ?>
                                 <tr>
                                     <td style="text-align: center;">
                                         <h4>{!!$txt!!}</h4>
-                                        <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px">
+                                        <!-- <img src="{{URL::asset("images/QUESTION_MANAGEMENT/{$imgs}")}}" class="col-center" alt="{{$imgs}}" width="150px"> -->
+                                        <img src="{{ config('app.QUESTION_PATH').$imgs}}" class="col-center" alt="{{$imgs}}" width="150px">
                                     </td>
                                 </tr>
                         <?php } 
@@ -175,7 +181,7 @@
                             document.getElementById("timer").className = "badge";
                             document.getElementById("timer").className += " badge-danger";
                         }
-                        document.getElementById("timer").innerHTML = waktu;
+                        document.getElementById("timer").innerHTML =  "SISA WAKTU "+waktu+" DETIK";
                         localStorage.setItem("startTime", waktu);
                     }
                 }, 1000);

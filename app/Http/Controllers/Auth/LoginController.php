@@ -70,11 +70,11 @@ class LoginController extends Controller
                     $isOnSchedule = true;
                 }
             }else{
-                $pesan = "Maaf Anda Tidak Memenuhi Syarat untuk Mengakses Halaman Ini";
+                $pesan = "Maaf Anda Tidak Memenuhi Syarat untuk Mengakses Halaman Ini,Jadwal Sudah Terlewat";
                 $isOnSchedule = false;
             }
 	    }else{
-            $pesan = "Maaf Anda Tidak Memenuhi Syarat untuk Mengakses Halaman Ini";
+            $pesan = "Maaf Anda Tidak Memenuhi Syarat untuk Mengakses Halaman Ini, Belum ada Jadwal";
             return view('errorPage')
                 ->with('pesan',$pesan);
         }
